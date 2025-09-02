@@ -1,0 +1,216 @@
+{
+    "user": [
+        {
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "contact_number": "1234567890",
+            "username":"johndoe",
+            "password": "hashed123",
+            "is_active": true,
+            "is_verified": true,
+            "attributes": {},
+            "created_by": "admin"
+        },
+        {
+            "user_id": "c02dc604-84d7-4dfb-b2b0-f5e66730e32e",
+            "name": "Jane Smith",
+            "email": "jane@example.com",
+            "contact_number": "9876543210",
+            "username":"janesmith",
+            "password": "hashed456",
+            "is_active": true,
+            "is_verified": false,
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "address_book": [
+        {
+            "address_book_id": "eb8db25c-2f9c-44dc-9fbe-5c8f0cb5b1d5",
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "address_line1": "123 Main St",
+            "address_line2": "Apt 4B",
+            "city": "New York",
+            "state": "NY",
+            "country": "USA",
+            "zip_code": "10001",
+            "is_default": true,
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "category": [
+        {
+            "category_id": "56b4f6fa-34cf-4304-8627-7f7c5c40c756",
+            "name": "Electronics",
+            "slug": "elec",
+            "description": "Electronic devices",
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "brand": [
+        {
+            "brand_id": "6e419c06-6ece-474c-88eb-b38e95edf808",
+            "name": "TechBrand",
+            "description": "High-quality electronics",
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "product": [
+        {
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "name": "Laptop Pro X",
+            "slug": "laptop-pro-x",
+            "description": "High-end laptop with 16GB RAM, 1TB SSD",
+            "brand_id": "6e419c06-6ece-474c-88eb-b38e95edf808",
+            "category_id": "56b4f6fa-34cf-4304-8627-7f7c5c40c756",
+            "price": 1499.99,
+            "discount_price": 1399.99,
+            "sku": "LPX-001",
+            "is_active": true,
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "product_inventory": [
+        {
+            "product_inventory_id": "07565855-9ff6-4cec-ba81-3224a11a2498",
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "stock_quantity": 10,
+            "reserved_quantity": 0,
+            "warehouse_location": "WH1",
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "product_image": [
+        {
+            "product_image_id": "28d2c400-0755-4ddf-b467-6b2582ee0fbb",
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "image_url": "https://example.com/laptop.jpg",
+            "alt_text": "Laptop Pro X",
+            "is_main": true,
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "cart": [
+        {
+            "cart_id": "a31e2dbc-064f-46b4-a89d-95bcf57c9172",
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "cart_item": [
+        {
+            "cart_item_id": "808aaca3-f8ff-45ac-8a11-7d8a5b91e18b",
+            "cart_id": "a31e2dbc-064f-46b4-a89d-95bcf57c9172",
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "quantity": 1,
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "order": [
+        {
+            "order_id": "14d48e61-47d1-46b5-aba7-e04191c3c43c",
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "order_number": "ORD-1001",
+            "total_amount": 1499.99,
+            "shipping_fee": 20,
+            "discount_amount": 0,
+            "payment_status": "Paid",
+            "order_status": "Shipped",
+            "shipping_address_id": "eb8db25c-2f9c-44dc-9fbe-5c8f0cb5b1d5",
+            "billing_address_id": "eb8db25c-2f9c-44dc-9fbe-5c8f0cb5b1d5",
+            "attributes": {},
+            "created_by": "admin"
+        }
+    ],
+    "order_item": [
+        {
+            "order_item_id": "7fdb87ab-2c63-45fa-a0c4-2121ba5cbd86",
+            "order_id": "14d48e61-47d1-46b5-aba7-e04191c3c43c",
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "quantity": 1,
+            "unit_price": 1499.99,
+            "total_price": 1499.99,
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "payment": [
+        {
+            "payment_id": "a931f5d2-8e3a-45c8-93f1-b99344ee4479",
+            "order_id": "14d48e61-47d1-46b5-aba7-e04191c3c43c",
+            "payment_method": "Credit Card",
+            "payment_reference": "TXN123456",
+            "amount": 1499.99,
+            "status": "Completed",
+            "paid_at": "2025-08-15T10:00:00Z",
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "shipping": [
+        {
+            "shipping_id": "7d1d28a9-0793-431f-a3b1-e0479ecf1597",
+            "order_id": "14d48e61-47d1-46b5-aba7-e04191c3c43c",
+            "courier_name": "FedEx",
+            "tracking_number": "TRACK123456",
+            "shipped_at": "2025-08-15T12:00:00Z",
+            "delivered_at": null,
+            "status": "In Transit",
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "coupon": [
+        {
+            "coupon_id": "7927e938-9a68-4803-b183-1e7f7bae9608",
+            "code": "WELCOME10",
+            "discount_value": 10,
+            "min_order_value": 100,
+            "max_discount": 50,
+            "valid_from": "2025-08-01T00:00:00Z",
+            "valid_to": "2025-12-31T23:59:59Z",
+            "is_active": true,
+            "usage_limit": 100,
+            "usage_count": 0,
+            "attributes": {},
+            "created_by":"admin"
+
+        }
+    ],
+    "review": [
+        {
+            "review_id": "ec1eb113-2a79-49b2-aca0-bb974fb73f8d",
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "product_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "rating": 5,
+            "comment": "Excellent product!",
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ],
+    "audit_log": [
+        {
+            "audit_log_id": "d6c792f8-5444-4b47-ab5b-6e2ac70ae10e",
+            "entity_type": "Product",
+            "entity_id": "adb3b7d7-bdad-419f-8103-e5c8fc25cba9",
+            "action": "CREATE",
+            "user_id": "ab14495a-f9dc-4176-9282-bf057ab9b4ce",
+            "old_data": null,
+            "new_data": {
+                "name": "Laptop Pro X",
+                "price": 1499.99
+            },
+            "attributes": {},
+            "created_by":"admin"
+        }
+    ]
+}
