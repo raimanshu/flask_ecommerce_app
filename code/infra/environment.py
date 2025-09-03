@@ -13,12 +13,15 @@ current_file_dir = Path(__file__).resolve().parent
 project_root = current_file_dir.parent.parent  # goes to the project root
 
 # SQLITE : Join with relative path (this path should not start with / or ../)
-relative_db_path = os.environ.get("SQLITE_DATABASE_PATH", "code/infra/database/app.db")
+relative_db_path = os.environ.get("SQLITE_DB_PATH", "code/database/app.db")
 db_absolute_path = (project_root / relative_db_path).resolve()
 
 # SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///../users.db")
 SQLALCHEMY_DATABASE_URI = f"sqlite:///{db_absolute_path}"
 SQLALCHEMY_DATABASE_PATH = str(db_absolute_path)
+
+
+
 
 
 
@@ -71,5 +74,9 @@ DATABASE_CONFIG = {
 '''
 Default configurations for Flask application.
 '''
+
+DEBUG_MODE = os.environ.get("DEBUG_MODE", False)
+DB_HOST= os.environ.get("DB_HOST", "127.0.0.1")
+DB_PORT= os.environ.get("DB_PORT", "5001")
 SECRET_KEY = os.environ.get("SECRET_KEY", "NO_ENVIRONMENT_FOUND")
 SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", "False")

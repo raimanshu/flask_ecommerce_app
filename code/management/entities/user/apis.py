@@ -8,11 +8,12 @@ from utils.utility import (
     generate_success_response,
     generate_service_unavailable_error_response,
     extract_query_params,
-    get_current_time
+    get_current_time,
 )
 from sqlalchemy import String, cast, desc, or_
 from sqlalchemy.inspection import inspect
 from infra.logging import logger
+from infra.db_router import set_current_db, get_session
 
 
 def create_user(content):
@@ -25,7 +26,7 @@ def create_user(content):
             )
             return response
         user = User(**content["user"].model_dump())
-        status, user_data = User.add(user)
+        status, user_data = User.add(user, content["db_session"])
         if not status:
             response = generate_not_acceptable_response("User creation failed.")
             return response
@@ -34,6 +35,7 @@ def create_user(content):
         response["user"] = user_data.to_dict()
     except Exception as ex:
         logger.exception(f"Error in create_user: {ex}")
+        response = generate_internal_server_error_response(str(ex))
     return response
 
 
@@ -46,7 +48,7 @@ def get_user(content):
                 "User ID is required to fetch user details."
             )
             return response
-        status, user = User.get(content)
+        status, user = User.get(content, content["db_session"])
         if not status:
             response = generate_entity_not_found_response("User")
             return response
@@ -64,7 +66,7 @@ def get_all_users(content):
     try:
         logger.debug(f"Fetching all users with content: {content}")
         user_data, all_user_data = [], []
-        _, all_user_data = User.get_all(content)
+        _, all_user_data = User.get_all(content, content["db_session"])
         if not all_user_data:
             response = generate_entity_not_found_response("Users")
             return response
@@ -85,7 +87,7 @@ def update_user(content):
         logger.debug(f"Updating user with content: {content}")
         updated_user = None
         content["user_id"] = content["user"].user_id
-        status, user_data = User.get(content)
+        status, user_data = User.get(content, content["db_session"])
         if not status:
             response = generate_entity_not_found_response("User")
             return response
@@ -97,7 +99,7 @@ def update_user(content):
             else:
                 setattr(user_data, key, value)
         user_data.modified_at = content["user"].modified_at
-        status, updated_user = User.update(user_data)
+        status, updated_user = User.update(user_data, content["db_session"])
         if not status:
             response = generate_not_acceptable_response("User update failed.")
             return response
@@ -119,7 +121,7 @@ def delete_user(content):
                 "User ID is required to delete user."
             )
             return response
-        status, user = User.get(content)
+        status, user = User.get(content, content["db_session"])
         if not status:
             response = generate_entity_not_found_response("User")
             return response
@@ -135,7 +137,7 @@ def delete_user(content):
         elif "current_user" in content:
             user.deleted_by = content["current_user"].user_id
             user.deleted_at = get_current_time()
-            status, _ = User.update(user_data)
+            status, _ = User.update(user_data, content["db_session"])
         if not status:
             response = generate_not_acceptable_response("User deletion failed.")
             return response
@@ -153,7 +155,7 @@ def get_total_users(content):
     try:
         logger.debug(f"Fetching total users with content: {content}")
         total_users, search_criteria = 0, []
-        user_query = User.query
+        user_query = content["db_session"].query(User)
         columns = inspect(User).columns
 
         if not content.get("include_deleted"):
@@ -192,7 +194,7 @@ def get_limited_users(content):
     try:
         logger.debug(f"Fetching limited users with content: {content}")
         users_data, users, columns_list = [], None, None
-        user_query = User.query
+        user_query = content["db_session"].query(User)
 
         params = extract_query_params(content)
         skip = params.get("skip", 0)
@@ -226,7 +228,7 @@ def get_filtered_users(content):
     try:
         logger.debug(f"Fetching filtered users with content: {content}")
         users_data, users, columns_list, search_criteria = [], [], None, []
-        user_query = User.query
+        user_query = content["db_session"].query(User)
 
         params = extract_query_params(content)
         skip = params.get("skip", 0)

@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import sys
+import bcrypt
 from pathlib import Path
 
 from flask import Flask
@@ -31,7 +32,7 @@ from management.entities.coupon.model import Coupon
 from management.entities.review.model import Review
 from management.entities.audit_log.model import AuditLog
 
-from utils.utility import get_current_time
+from utils.utility import get_current_time, string_to_base64
 
 load_dotenv()
 
@@ -151,7 +152,7 @@ def seed_all():
                 "is_verified",
                 "attributes",
                 "created_by",
-                # "created_at",
+                "created_at",
             ],
             "address_book": [
                 "address_book_id",
@@ -300,7 +301,7 @@ def seed_all():
             ],
         }
 
-        no_params_tables = ["users", "category", "coupon", "brand", "product"]
+        no_params_tables = ["user", "category", "coupon", "brand", "product"]
         single_params_tables = [
             "address_book",
             "order",
@@ -361,6 +362,9 @@ def seed_all_data(table_name, table_column_list, data_rows, table_class_name):
         for column in table_column_list:
             if column == "attributes":
                 payload["attributes"] = row.get("attributes", {})
+            if column == "password":
+                payload["password"] = string_to_base64(row.get("password", ""))
+                # payload["password"] = bcrypt.hashpw(row.get("password", ""), bcrypt.gensalt())
             elif column in [
                 "paid_at",
                 "shipped_at",

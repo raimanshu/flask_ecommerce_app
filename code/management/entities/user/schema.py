@@ -1,8 +1,9 @@
 import uuid
+import bcrypt
 from typing import Optional
 from pydantic import EmailStr, Field, root_validator, validator
 
-from utils.utility import get_current_time
+from utils.utility import get_current_time, string_to_base64
 from management.entities.entity_base.schema import DefaultEntityBase
 
 class UserBase(DefaultEntityBase):
@@ -29,7 +30,7 @@ class UserBase(DefaultEntityBase):
     )
     password:str = Field(
         min_length=6,
-        max_length=15,
+        # max_length=15,
         default=None,
         strip_whitespace=True,
         description="Password for the user account",
@@ -39,11 +40,11 @@ class UserBase(DefaultEntityBase):
         strip_whitespace=True,
         description="Contact number of the user",
     )
-    address: str = Field(
-        default=None,
-        strip_whitespace=True,
-        description="Address of the user",
-    )
+    # address: str = Field(
+    #     default=None,
+    #     strip_whitespace=True,
+    #     description="Address of the user",
+    # )
     is_active: bool = Field(
         default=True,
         strip_whitespace=True,
@@ -73,7 +74,8 @@ class AdditionalValidators:
     def set_password(cls, values):
         password = values.get("password")
         if password:
-            values["password"] = password
+            values["password"] = string_to_base64(password)
+            # values["password"] = bcrypt.hashpw(password, bcrypt.gensalt())
         return values
     
 class UserCreate(AdditionalValidators, UserBase):

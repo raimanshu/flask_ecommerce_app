@@ -1,8 +1,10 @@
 from infra.database import db
 from flask import jsonify
+from sqlalchemy.ext.mutable import MutableDict
 from utils.constants import DB_COLUMN_MAX_LENGTH
 from sqlalchemy.exc import SQLAlchemyError
 from infra.logging import logger
+
 
 class User(db.Model):
     __tablename__ = "user"
@@ -18,7 +20,8 @@ class User(db.Model):
     # address = db.Column(db.String(DB_COLUMN_MAX_LENGTH), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
-    attributes = db.Column(db.JSON, default={})
+    # attributes = db.Column(db.JSON, default={})
+    attributes = db.Column(MutableDict.as_mutable(db.JSON), default=dict)
     created_at = db.Column(db.DateTime, nullable=False)
     created_by = db.Column(db.String(DB_COLUMN_MAX_LENGTH), nullable=False)
     modified_at = db.Column(
@@ -29,11 +32,13 @@ class User(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
     deleted_by = db.Column(db.String(DB_COLUMN_MAX_LENGTH), nullable=True)
 
-    addresses = db.relationship('AddressBook', backref='user', cascade="all, delete-orphan")
-    cart = db.relationship('Cart', uselist=False, backref='user')
-    orders = db.relationship('Order', backref='user')
-    reviews = db.relationship('Review', backref='user')
-    audit_logs = db.relationship('AuditLog', backref='user')
+    addresses = db.relationship(
+        "AddressBook", backref="user", cascade="all, delete-orphan", lazy="dynamic"
+    )
+    cart = db.relationship("Cart", uselist=False, backref="user", lazy="select")
+    orders = db.relationship("Order", backref="user", lazy="dynamic")
+    reviews = db.relationship("Review", backref="user", lazy="dynamic")
+    audit_logs = db.relationship("AuditLog", backref="user", lazy="dynamic")
 
     def to_dict(self):
         return {
@@ -52,44 +57,44 @@ class User(db.Model):
             "deleted_by": self.deleted_by,
         }
 
-    def add(self):
+    def add(self, db_session):
         try:
             logger.debug(f"Adding user: {self} to user table")
-            return _add_user(self)
+            return _add_user(self, db_session)
         except Exception as e:
             logger.exception(f"Error adding user: {e}")
             return False, None
 
-    def update(self):
+    def update(self, db_session):
         try:
             logger.debug(f"Updating user: {self} to user table")
-            return _update_user(self)
+            return _update_user(self, db_session)
         except Exception as e:
             logger.exception(f"Error updating user: {e}")
             return False, None
 
-    def delete(user):
+    def delete(user, db_session):
         try:
             logger.debug(f"Deleting user: {user} from user table")
-            return _delete_user(user)
+            return _delete_user(user, db_session)
         except Exception as e:
             logger.exception(f"Error deleting user: {e}")
             return False, None
 
     @staticmethod
-    def get(content):
+    def get(content, db_session):
         try:
             logger.debug(f"Fetching user: {content} from user table")
-            return _get_user(content)
+            return _get_user(content, db_session)
         except Exception as ex:
             logger.exception(f"Error fetching user: {ex}")
             return False, None
 
     @staticmethod
-    def get_all(content):
+    def get_all(content, db_session):
         try:
             logger.debug(f"Fetching all users from user table")
-            return _get_all_users(content)
+            return _get_all_users(content, db_session)
         except Exception as ex:
             logger.exception(f"Error fetching all users: {ex}")
             return False, None
@@ -103,7 +108,9 @@ class UserProvider(User):
             logger.debug(f"Fetching user by attribute {attribute_name}: {content}")
             return _get_user_by_attribute(attribute_name, content)
         except Exception:
-            logger.exception(f"Critical error in UserProvider.get_by_attribute - {content}")
+            logger.exception(
+                f"Critical error in UserProvider.get_by_attribute - {content}"
+            )
             return False, None
 
     @staticmethod
@@ -116,12 +123,16 @@ class UserProvider(User):
                 attribute_name, content, require_object
             )
         except Exception:
-            logger.exception(f"Critical error in UserProvider.get_collective_data_by_attribute - {content}")
+            logger.exception(
+                f"Critical error in UserProvider.get_collective_data_by_attribute - {content}"
+            )
             return False, None
+
 
 # region User Helper Functions
 
-def _get_user(content):
+
+def _get_user(content, db_session):
     try:
         logger.debug(f"Fetching user: {content}")
         if content.get("user", ""):
@@ -130,7 +141,7 @@ def _get_user(content):
             content["user_id"] = content["entity_id"]
         user = None
         # user = User.query.filter_by(user_id=content["user_id"]).first()
-        user_query = db.session.query(User).filter_by(user_id=content["user_id"])
+        user_query = db_session.query(User).filter_by(user_id=content["user_id"])
         if not content.get("include_deleted"):
             user_query = user_query.filter(User.deleted_by.is_(None))
         user = user_query.first()
@@ -143,14 +154,14 @@ def _get_user(content):
     except Exception as ex:
         logger.exception(f"Error fetching user: {ex}")
         raise ex
-    
 
-def _get_all_users(content):
+
+def _get_all_users(content, db_session):
     try:
         logger.debug(f"Fetching all users: {content}")
         user = None
         # user = User.query.all()
-        user_query = db.session.query(User)
+        user_query = db_session.query(User)
         if not content.get("include_deleted"):
             user_query = user_query.filter(User.deleted_by.is_(None))
         user = user_query.all()
@@ -162,26 +173,28 @@ def _get_all_users(content):
     except Exception as ex:
         logger.exception(f"Error fetching all users: {ex}")
         raise ex
-    
-def _delete_user(user):
+
+
+def _delete_user(user, db_session):
     try:
         logger.debug(f"Deleting user: {user}")
         # User.query.filter_by(user_id=user.user_id).delete()
-        db.session.query(User).filter_by(user_id=user.user_id).delete()
-        db.session.commit()
+        db_session.query(User).filter_by(user_id=user.user_id).delete()
+        db_session.commit()
         logger.success(f"User deleted: {user}")
         return True
     except SQLAlchemyError as ex:
         logger.exception(f"Error deleting user: {ex}")
-        db.session.rollback()
+        db_session.rollback()
         return ex
 
-def _add_user(user):
+
+def _add_user(user, db_session):
     try:
         logger.debug(f"Adding user: {user}")
-        db.session.add(user)
-        db.session.commit()
-        db.session.refresh(user)
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
         user_dict = user.to_dict()
         logger.success(f"User added: {user_dict}")
         return True, user
@@ -191,13 +204,13 @@ def _add_user(user):
         raise ex
 
 
-def _update_user(user):
+def _update_user(user, db_session):
     try:
-        logger.debug(f"Updating user: {user}")      
+        logger.debug(f"Updating user: {user}")
         updated_user = None
         # User.query.filter_by(user_id=user.user_id).update(user.to_dict())
-        updated_user = db.session.merge(user)
-        db.session.commit()
+        updated_user = db_session.merge(user)
+        db_session.commit()
         if not updated_user:
             logger.exception("User not updated")
             return False, None
@@ -209,7 +222,9 @@ def _update_user(user):
         db.session.rollback()
         raise ex
 
-# endregion 
+
+# endregion
+
 
 # region UserProvider Helper Functions
 def _get_user_by_attribute(attribute_name, content):
@@ -217,7 +232,7 @@ def _get_user_by_attribute(attribute_name, content):
         logger.debug(f"Fetching user by attribute {attribute_name}: {content}")
         user = None
         user_query = (
-            db.session
+            content["db_session"]
             .query(User)
             .filter(
                 getattr(User, attribute_name) == content.get(f"{attribute_name}", "")
@@ -227,7 +242,9 @@ def _get_user_by_attribute(attribute_name, content):
             user_query = user_query.filter(User.deleted_by.is_(None))
         user = user_query.first()
         if not user:
-            logger.debug(f"No user found with {attribute_name} in {content.get(f'{attribute_name}', '')}")
+            logger.debug(
+                f"No user found with {attribute_name} in {content.get(f'{attribute_name}', '')}"
+            )
             return False, None
         user_dict = user.to_dict()
         logger.success(f"User fetched by attribute {attribute_name}: {user_dict}")
@@ -244,7 +261,7 @@ def _get_collective_user_by_attribute(attribute_name, content, require_object):
         )
         users_dict = None
         users = (
-            db.session
+            content["db_session"]
             .query(User)
             .filter(
                 getattr(User, attribute_name).in_(content.get(f"{attribute_name}", []))
@@ -261,12 +278,16 @@ def _get_collective_user_by_attribute(attribute_name, content, require_object):
                 for user_data in users
             }
         if not users_dict:
-            logger.debug(f"No users found with {attribute_name} in {content.get(f'{attribute_name}', '')}")
+            logger.debug(
+                f"No users found with {attribute_name} in {content.get(f'{attribute_name}', '')}"
+            )
             return False, None
         logger.success(f"Users fetched by attribute {attribute_name}: {users_dict}")
         return True, users_dict
     except Exception as ex:
-        logger.exception(f"Error fetching collective user data by attribute {attribute_name}: {ex}")
+        logger.exception(
+            f"Error fetching collective user data by attribute {attribute_name}: {ex}"
+        )
         raise ex
 
 

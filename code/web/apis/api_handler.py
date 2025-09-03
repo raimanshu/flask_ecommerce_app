@@ -23,6 +23,7 @@ def entity_operation(entity_name, operation_name, payload):
             if not entity_data[f"{entity_name}"]:
                 response = generate_bad_request_response()
                 return response
+            entity_data.update(payload)
             response = route["api"](entity_data)
         else:
             payload["operation_name"] = operation_name
@@ -34,8 +35,10 @@ def entity_operation(entity_name, operation_name, payload):
 def authentication_api_operation(payload, **kwargs):
     response = DEFAULT_API_RESPONSE_OBJ.copy()
     try:
-        logger.debug(f"Authentication Operation: {kwargs['operation_name']}, Payload: {payload}")
-        if kwargs["api_endpoint"] not in ENTITY_API_ROUTES["authentication"]:
+        logger.debug(
+            f"{kwargs['api_endpoint']} operation initiated having payload {payload}"
+        )
+        if kwargs["api_endpoint"] not in AUTHENTICATION_API_ROUTES:
             response = generate_bad_request_response()
             return response
         payload.update(kwargs)
